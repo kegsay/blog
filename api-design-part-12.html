@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+        <title>API Design (Part 1/2)</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Software Engineering <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+                <li><a href="/pages/about.html">About</a></li>
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/api-design-part-12.html" rel="bookmark"
+                   title="Permalink to API Design (Part 1/2)">API Design (Part 1/2)</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2015-06-17T22:52:00+01:00">
+                Wed 17 June 2015
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/kegsay.html"> kegsay</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <p>API design is Hard. I've made many good and bad decisions when designing
+APIs and I hope this blog post will guide people into designing better
+APIs. It's a pretty meaty subject, so I've broken it down into two
+parts. This first part focuses on the actual design process for APIs.
+The second part focuses on the tools and techniques you can use when
+designing APIs.</p>
+<p><strong>What is an API?</strong></p>
+<p>I don't mean a textbook definition, which Google defines as:</p>
+<blockquote>
+a set of functions and procedures that allow the creation of
+applications which access the features or data of an operating
+system, application, or other service.</blockquote>
+<p>I don't find this particularly helpful, as it's hard to map this
+statement to what I do every day. My hand-wavey definition would be that
+&quot;An API is the way a developer interacts with your code.&quot;</p>
+<p>This is short and sweet but has a few key points:</p>
+<ul class="simple">
+<li><strong>It is &quot;*The One True Way*&quot;.</strong> The API is the de jure way of
+accessing your code and logic. This is the way you <em>intend
+for</em>developers to use your code. This doesn't always match reality.
+If the API is lacking or unclear, all too often practices like
+accessing private fields or functions or relying on undocumented
+side-effects creep in. People start to rely on this, and it ends up
+becoming the <em>de facto</em>way developers interact with your API. At
+this point, it is no longer your API, but a modified version of it
+which is often more practical to the problem domain.</li>
+<li><strong>It is for developers.</strong> Ultimately, other people in the profession
+are your target audience. They may be web developers half way around
+the world in the case of REST APIs. They may be a work colleague in
+the case of internal company APIs. It may even be <em>yourself</em>several
+years later when you've forgotten what you've done. More generally,
+the person using your API has some knowledge of the
+<em>underlying</em>domain in question (e.g. it's a REST API, so you're
+using HTTP) but may not have knowledge of the <em>specific</em>domain that
+your API is in (e.g. knowledge of all the Facebook Graph
+entities/relationships).</li>
+<li><strong>It is to interact with some code.</strong> This code may not be defined
+yet (in the case of specification writing), or it may be concrete.
+The important point to note is that APIs implies a concrete
+implementation <em>somewhere.</em>This has implications on the first two
+points. If you are not the one writing the concrete implementation,
+you need to be extremely thorough when specifying the interfaces in
+order to convey your intent correctly. Common pitfalls here are not
+specifying edge cases absolutely unambiguously (e.g. can this be
+null? Is 0 a valid value?)</li>
+</ul>
+<p><strong>What does the API do?</strong></p>
+<p>This is the single most important question when designing an API. What
+is your goal/objective/aim here? This should ideally be represented as
+<a class="reference external" href="https://en.wikipedia.org/wiki/Use_case">use cases</a> which are
+agnostic to the API itself. You want use cases to be clear and concise
+to a non-technical audience. This is not just for communication
+purposes. Specifying use cases in pseudo-code like terms immediately
+restricts how you think about the problem on a sub-conscious level and
+affects your ability to come up with potentially better designs. For
+example, a bad use case is something like &quot;Get the account, add some
+money to it, store the account&quot;. This immediately evokes 3 API calls
+(getAccount, addMoney, setAccount), whereas 1 may be the better solution
+(depositMoney). A better description would be to &quot;deposit money into an
+existing account&quot;. Use domain-specific words whenever you can, as it
+will likely affect the names of your objects/entities.</p>
+<p>A particularly gnarly problem comes when trying to extract use cases
+from other people. People will often announce solutions or steps to
+perform to solve the problem rather than say what the problem really is.
+This is problematic because:</p>
+<ul class="simple">
+<li>It prevents you as a developer from seeing the whole problem. This
+can lead to bad designs because you simply weren't aware of some
+additional constraint or couldn't leverage a useful bit of
+information.</li>
+<li>The solutions presented may not be appropriate or well-thought out.
+Rarely is the first design the best design.</li>
+<li>You may miss important &quot;behind the scenes&quot; information such as
+assumptions made and trade-offs considered.</li>
+</ul>
+<p>Always, always dig deeper. It is sometimes hard work to do this, but you
+can save yourself a lot of time by getting clear and concise use cases
+first, so you know what the aim of your API is. Now that you have your
+use cases, you need to start designing the API...</p>
+<p><strong>What you should think about when designing an API</strong></p>
+<p>A lot of the guidelines when designing APIs go something like: &quot;Be
+Consistent&quot;, &quot;Do one thing and do it well&quot; and &quot;Don't have surprising
+behaviour&quot;. I couldn't find a comprehensive list of tips which I should
+be thinking about when designing APIs. Then, I stumbled upon the 1996
+paper &quot;<em>Usability Analysis of Visual Programming Environments: A
+'Cognitive Dimensions' Framework</em>&quot; by TRG Green and M Petre. They
+focused on visual programming, but their cognitive dimensions apply
+uncannily well to API design (Source:
+<a class="reference external" href="https://en.wikipedia.org/wiki/Cognitive_dimensions_of_notations">wikipedia</a>):</p>
+<ol class="arabic simple">
+<li><strong>*Abstraction gradient</strong> : What are the minimum and maximum levels
+of abstraction exposed by the notation? Can details be encapsulated?*</li>
+<li><strong>*Closeness of mapping</strong> : How closely does the notation correspond
+to the problem world?*</li>
+<li><strong>*Consistency</strong> : After part of the notation has been learned, how
+much of the rest can be successfully guessed?*</li>
+<li><strong>*Diffuseness / terseness</strong> : How many symbols or how much space
+does the notation require to produce a certain result or express a
+meaning?*</li>
+<li><strong>*Error-proneness</strong> : To what extent does the notation influence the
+likelihood of the user making a mistake?*</li>
+<li><strong>*Hard mental operations</strong> : How much hard mental processing lies at
+the notational level, rather than at the semantic level? Are there
+places where the user needs to resort to fingers or penciled
+annotation to keep track of what’s happening?*</li>
+<li><strong>*Hidden dependencies</strong> : Are dependencies between entities in the
+notation visible or hidden? Is every dependency indicated in both
+directions? Does a change in one area of the notation lead to
+unexpected consequences?*</li>
+<li><strong>*Juxtaposability</strong> : Can different parts of the notation be
+compared side-by-side at the same time?*</li>
+<li><strong>*Premature commitment</strong> : Are there strong constraints on the order
+with which tasks must be accomplished? Are there decisions that must
+be made before all the necessary information is available? Can those
+decisions be reversed or corrected later?*</li>
+<li><strong>*Progressive evaluation</strong> : How easy is it to evaluate and obtain
+feedback on an incomplete solution?*</li>
+<li><strong>*Role-expressiveness</strong> : How obvious is the role of each component
+of the notation in the solution as a whole?*</li>
+<li><strong>*Secondary notation and escape from formalism</strong> : Can the notation
+carry extra information by means not related to syntax, such as
+layout, color, or other cues?*</li>
+<li><strong>*Viscosity</strong> : Are there in the notation any inherent barriers to
+change? How much effort is required to make a change to a program
+expressed in the notation? There are 3 types: &quot;Knock-on&quot;: a change in
+the code violates internal constraints in the program, whose
+resolution may violate further internal constraints*.<em>&quot;Repetition&quot;:
+a single action within the user’s conceptual model requires many,
+repetitive device actions. &quot;Scope&quot;: a change in the size of the input
+data set requires changes to the program structure itself.</em></li>
+<li><strong>*Visibility</strong> : How readily can required parts of the notation be
+identified, accessed and made visible?*</li>
+</ol>
+<p>To highlight some examples of what these dimensions mean:</p>
+<ul class="simple">
+<li>If you're writing a pet store API, you would expect to see a Pet
+object and a Customer object (<strong>#2 - Closeness of mapping</strong>).</li>
+<li>An API with an addFoo function should have a removeFoo function (<strong>#3
+- Consistency</strong>)</li>
+<li>To send instant messages to another user, a bad API may accept 2x
+User, a Route, a TargetDevice, MessageContents and MessageMetadata.
+This requires far too many moving parts in order to produce a result
+(<strong>#4 -</strong> <strong>Diffuseness / terseness</strong>). It's worth noting that having
+too few objects is also bad, if it isn't representative of the
+problem domain.</li>
+<li>APIs which rely on being called in a certain order (<strong>#5 - Error
+proneness, #9 - Premature commitment)</strong></li>
+<li>Errors should be informative and clearly identify the problem (<strong>#10
+- Progressive evaluation</strong>). Note that this clarity applies to the
+<em>API</em> and not to the <em>implementation</em>, e.g. returning HTTP 500 when
+there is an <em>implementation error</em>is appropriate.</li>
+<li>Tightly coupled components (<strong>#13 Viscosity (Knock-on)</strong>).</li>
+</ul>
+<p>For a good talk on API design (with an emphasis on Java), I would
+recommend <a class="reference external" href="https://www.youtube.com/watch?v=heh4OeB9A-c">Joshua Bloch's Google Tech
+Talk</a>. It's an hour long
+but has a lot of practical advice which I'm not going to (badly) rehash
+here in this blog post. Once you've distilled this information, you need
+to actually come up with a proposal. Don't try to be perfect, and
+instead aim to <a class="reference external" href="https://en.wikipedia.org/wiki/KISS_principle">keep it as simple as
+possible</a>.</p>
+<p><strong>Rapid development</strong></p>
+<p>When you have a proposed design, you need to see if it is fit for
+purpose. You should quickly write up a prototype which demonstrates the
+proposed design. This is hard to do because there aren't a lot of tools
+to do this currently (I'll cover this in part two). The prototype need
+not be code. Worked examples on paper using the proposed design can work
+just as well.</p>
+<p>The whole point of trying out the design is to be able to prove that the
+14 dimensions outlined earlier are met satisfactorily. Often, <strong>there
+will not be a simple pass/fail</strong> to each dimension. A lot of these
+dimensions are subjective e.g. #5 - estimating the likelihood of the
+user making a mistake. You'll probably find some flaws in the original
+design. There will be disagreements among people about which dimensions
+are important. That's the point. Iterate on the design a few times, and
+when you (and your team) are happy with it, write up a prototype in code
+if you haven't already.</p>
+<p>At this point, it's extremely tempting to say that the API is complete
+and act as if the API is set in stone. This is a mistake. The point of
+writing a prototype in code is not to &quot;finalise&quot; the API. It is to
+exercise parts of the API which people may not have thought about. You
+may find yourself calling the same functions in the same order over and
+over, which you never thought about before. You may find edge cases
+where you lack all the information you need to make a decision due to
+some race conditions. The prototype is serving as the ultimate test of
+your API. Modify it liberally. Don't be tempted to set your API in stone
+yet. How long you remain in this process depends on the time
+constraints. When the API hasn't changed for a while, it's a good
+indication that the API has reached a natural equilibrium. This doesn't
+necessarily mean it is the best solution, it just means it has reached a
+local minima. This is the ideal point to make the API public.</p>
+<p><strong>Future-proof your API</strong></p>
+<p>You should assume that the first public API will be replaced completely.
+This means designing in version numbers from day 1. You should consider
+how flexible the API is to modification. For example, it is a lot easier
+to add new JSON keys to a JSON object than it is to rename keys. That
+being said, try not to &quot;organically grow&quot; your API or else you can end
+up with some odd, confusing or surprising behaviour.</p>
+<p>An example of an inflexible API is Android's permissions model, in
+particular push notifications. The permission depends on a string
+constant which was originally set to
+<tt class="docutils literal">com.google.android.c2dm.permission.RECEIVE</tt>. This was named after
+Cloud-to-Device Messaging (C2DM) which was the API they presented at the
+time to send push notifications. Fast forward several years and this is
+the <em>only</em>reference to C2DM remaining. The API was superceded by
+Google Cloud Messaging (GCM) but because they baked-in the name of the
+API into the Android permission constant, they couldn't ever update it.
+Now in practice, this doesn't really matter because most people just
+copy and paste the string and couldn't care less about what it means.
+However, anyone looking at the API can see this relic which developers
+are stuck with forevermore. Google had a choice to either leave the wart
+alone or break backwards-compatibility with apps which used the old
+string constant. They decided to leave it as it was, which I think was
+the right choice.</p>
+<p>Always be thinking about extensibility when modifying the API. You may
+have heard the saying &quot;It's easier to add than it is to take away&quot; used
+in reference to API design. This is absolutely true. You can always add
+more methods, more REST endpoints, more helper functions, but the moment
+you want to <em>remove</em>a REST endpoint or an obsolete interface function,
+things break and you start getting hate mail. Add things
+<em>sparingly.</em>This should be thought of as a stronger version of
+<a class="reference external" href="https://en.wikipedia.org/wiki/You_aren%27t_gonna_need_it">YAGNI</a>,
+because the scope for things to go wrong is that much bigger. If you're
+thinking you &quot;probably&quot; will need this in the future, <strong>don't add it</strong>.
+You need to be certain; if it isn't blocking progress then you don't
+need it. It's easy to add it in later and you don't break other people's
+code when you push a new version out. Rather than getting hate mail,
+you'll be getting praise because you've added support for
+super-awesome-thing-#4.</p>
+<p><strong>Tools and techniques</strong></p>
+<p>Part two will outline some useful tools and techniques you can use when
+designing APIs. This will focus more on the actual &quot;doing&quot; part of API
+design rather than the ideals you should be shooting for.</p>
+
+            </div><!-- /.entry-content -->
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+      <li><a href="/pages/about.html">About</a></li>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/design.html">design</a></li>
+		<li><a href="/category/misc.html">misc</a></li>
+		<li><a href="/category/tooling.html">tooling</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+	    <li class="tag-4"><a href="/tag/api-design.html">api-design</a></li>
+	    <li class="tag-4"><a href="/tag/build-tools.html">build-tools</a></li>
+	    <li class="tag-4"><a href="/tag/android.html">android</a></li>
+	    <li class="tag-4"><a href="/tag/javascript.html">javascript</a></li>
+</ul>
+
+
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>

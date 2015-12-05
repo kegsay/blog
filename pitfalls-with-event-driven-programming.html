@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+        <title>Pitfalls with event-driven programming</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Software Engineering <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+                <li><a href="/pages/about.html">About</a></li>
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/pitfalls-with-event-driven-programming.html" rel="bookmark"
+                   title="Permalink to Pitfalls with event-driven programming">Pitfalls with event-driven programming</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2015-08-05T22:55:00+01:00">
+                Wed 05 August 2015
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/kegsay.html"> kegsay</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <p>If you're a programmer, you've probably done some event-driven
+programming. This may be as simple as responding to button clicks by
+attaching listeners to an object, or listening for special string
+constants which are emitted with some arguments. This blog post
+discusses some event-driven approaches and then details some of the
+pitfalls which you should look out for.</p>
+<p><strong>Writing an event handler</strong></p>
+<p>This is the most basic part, the stuff you do when your event fires. In
+languages which have first-class functions (e.g. JavaScript) this is
+often trivial to do, but in other languages like Java, it often involves
+overriding a base class or interface which has a bit more boilerplate
+attached to it. Interesting distinctions here are mainly in whether the
+function can <strong>return</strong>anything of interest or alter the
+<strong>sequence</strong>of event handlers called. The return value may alter
+subsequent event handlers which are listening on the same event e.g. by
+passing the return value to the next handler. Alternatively, the event
+handler may be able to prevent subsequent event handlers from being
+called like Android's <tt class="docutils literal">abortBroadcast()</tt> method on
+<tt class="docutils literal">BroadcastReceiver</tt>.</p>
+<p>In general, anything which can alter the arguments passed to other
+handlers or the sequence of handlers called is a <em>very</em>bad thing. This
+is because it adds a <em>huge amount of complexity</em>. You can never be 100%
+sure that a given handler will ever be called unless you <strong>check each
+and every handler that is listening for a given event</strong>. You suddenly
+need to care about the sequence of handlers called. Don't do that to
+yourself. Handlers which can &quot;pass&quot; variables to other handlers are also
+a huge headache to work with. The semantics are often extremely murky,
+particularly whether handler X will receive handler's Y return value (or
+will it get Z's instead?), and where that will be positioned in the
+function arguments. In the end, you have to look at multiple handlers to
+work out what exactly you can do in another handler, which increases the
+scope of possible errors you can encounter.</p>
+<p><em>Keep event handlers completely isolated from each other.</em></p>
+<p><strong>Binding the event handler</strong></p>
+<p>This is where you attach your function to a specific event which will be
+fired in the future (e.g. a button click). This binding may be based on
+an object instance (e.g. <tt class="docutils literal"><span class="pre">button.setOnClickListener(...)</span></tt>), or based
+on a string constant (e.g. Android's Intent actions, Node.js'
+<tt class="docutils literal"><span class="pre">EventEmitter.on(&quot;constant&quot;,</span> <span class="pre">function(){...})</span></tt>. The most interesting
+difference here is the dependency required in order for the event
+handler to be bound to an event. In one case it's a string constant
+(assuming a global dispatcher), in the other it is a UI widget. This has
+implications on how accessible it is to listen for events.</p>
+<p>In general, it is good practice to separate your logic from your UI.
+This means your logic won't have access to any UI widgets in order to
+listen for events from button clicks like &quot;delete all my stuff&quot;. In
+frameworks where handlers can only be attached to UI widgets, you end up
+emitting another event (e.g. the string constant version) which
+<em>can</em>be listened by your logic layer. That's not to say that the UI
+layer may not wish to listen for the event as well (e.g. to say &quot;Are you
+sure? Y/N&quot;), but ultimately the transition from UI to logic layers will
+need to be done at some point. This transition can be done directly if
+the UI layer maintains an instance of your logic layer (e.g. as an
+interface) which works fine if your only want to invoke a single
+component when the event fires. If you want to invoke mutliple
+components though, it begins to get error prone. One downside to the
+global dispatcher string-based approach is that you cannot enforce
+<em>who</em>can listen for a certain event, which you can do via the object
+instance approach via dependency injection.</p>
+<p><em>Think about which entities are required in order to bind an event; it
+can be a boon if done right.</em></p>
+<p><strong>Firing the event</strong></p>
+<p>This is where each event handler listening for a given event is invoked
+with some arguments (which may be <tt class="docutils literal">void</tt>). The devil is in the detail
+with this. Are the handlers invoked concurrently on different threads?
+Is there any ordering between the invocations? Are the handlers invoked
+asynchronously (next tick of the event loop)? Which <em>thread</em>will the
+handler be called on (e.g. do I need to do <tt class="docutils literal">runOnUiThread</tt>)? This
+information is critical, but often missed out of public APIs which
+expose events. In some environments the answer is a given (e.g.
+JavaScript) but in others you may end up finding out through trial and
+error.</p>
+<p>Scoping plays an important part when firing events. The event may be
+fired only for handlers attached to the object, or it may go into a
+global cesspool of events. The global way is by far the easiest because
+you don't need to think about your dependencies, but it has all the
+problems of traditional global state (albeit in a read-only form since
+you can't modify the event being emitted). On the flip side, if it is
+too highly scoped then it might as well be useless (e.g. UI widget
+scope).</p>
+<p><em>Be clear and consistent with how your events are fired, and consider
+the scope of each event.</em></p>
+<hr class="docutils" />
+<p>Finally, I want to discuss perhaps the biggest problem with event-driven
+programming: <strong>flow control</strong>. Looking at the code in the editor, it is
+<em>nigh impossible</em>to work out the line-by-line execution. Now, ideally
+you <em>wouldn't care</em> because the handlers are processing completely
+isolated things. But it rarely works out this way. Some frameworks allow
+<em>events to emit events</em> which can lead to a cascade of additional
+unexpected logic firing whenever you, say, hit the send message button.
+This increases complexity hugely, and because your code has separated
+concerns nicely into different events and event handlers, it's <em>very
+easy</em>to do this. At its worst, this can lead to spaghetti code. This
+can be mitigated by being strict with your dispatchers (don't use global
+ones which every part of your program could <em>potentially</em>interact
+with!). Inject your dispatcher like you would any other dependency, and
+scope your dispatcher based on a function of your app (e.g.
+<tt class="docutils literal">MessageSendingDispatcher</tt>). This allows you to make much stronger
+guarantees about events which could possibly be fired because each
+dispatcher acts like a fire break.</p>
+<p>Overall, event-driven programming is a great way to design certain
+problems like button clicking, but when used without clear rules (which
+are enforced) it can lead to horrendously messy loosely-coupled code. Be
+conservative with what you emit: procedural isn't always that bad.</p>
+
+            </div><!-- /.entry-content -->
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+      <li><a href="/pages/about.html">About</a></li>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/design.html">design</a></li>
+		<li><a href="/category/misc.html">misc</a></li>
+		<li><a href="/category/tooling.html">tooling</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+	    <li class="tag-4"><a href="/tag/api-design.html">api-design</a></li>
+	    <li class="tag-4"><a href="/tag/build-tools.html">build-tools</a></li>
+	    <li class="tag-4"><a href="/tag/android.html">android</a></li>
+	    <li class="tag-4"><a href="/tag/javascript.html">javascript</a></li>
+</ul>
+
+
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>

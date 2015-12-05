@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+        <title>Android and the dangers of delegation</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Software Engineering <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+                <li><a href="/pages/about.html">About</a></li>
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/android-and-the-dangers-of-delegation.html" rel="bookmark"
+                   title="Permalink to Android and the dangers of delegation">Android and the dangers of delegation</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2015-05-31T21:54:00+01:00">
+                Sun 31 May 2015
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/kegsay.html"> kegsay</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <p>For any Android developer, there comes a time where you debug a stack
+trace from the Play Console or from Google Analytics and you think
+<em>&quot;what?!&quot;.</em>The stack trace may not even call into your code or it may
+be an exception which you didn't know was possible to be thrown. The
+latter is the topic of this post.</p>
+<p><strong>The problem</strong></p>
+<p>In older versions of Android (API 8 / 2.2), the built-in Android
+libraries could throw an exception which was completely undocumented.
+This would manifest itself as a crash, unless you caught all exceptions,
+which is generally seen as bad practice.</p>
+<p><strong>The solution</strong></p>
+<p>The only way to handle this would be to either:</p>
+<ul class="simple">
+<li>Work out the precise failure mode (which parameters caused the
+undocumented exception) and handle that case, scoping it as closely
+as possible to the data from the crash report. &quot;Handling&quot; in this
+case may be explicitly catching the exception, or it may be not
+calling the API with known buggy parameters.</li>
+<li>Catch all exceptions on that API call.</li>
+</ul>
+<p>In a production environment, catching everything makes the most sense
+because you completely remove the risk of crashing the app with that API
+call and you can fail gracefully. If instead you catch the explicit
+exception, but don't quite have the full set of data to scope your
+exception handling to, you risk crashing again.</p>
+<p><strong>Analysis</strong></p>
+<p>After encountering this, my faith in Android APIs was shattered. Failure
+modes were identified for the API, but this particular one was not
+documented. As a result of lack of documentation, users had a buggy
+crashy app and I had to pick up the pieces. What's worse, the app could
+still easily recover had I known about it: this wasn't a fatal &quot;I really
+can't startup without this API call working&quot; scenario. This made me
+seriously reconsider how I was interacting with Android APIs, and led to
+me employing Pokémon exception handling (&quot;Gotta' catch em' all!&quot;). This
+was not ideal but it was the lesser of two evils (the alternative being
+risking another crash for another undocumented exception).</p>
+<p>I then started to think how this could have happened. It's unfair to
+push the blame solely onto Google for this, because device manufacturers
+have an awful habit of tweaking and modding the Android OS for their
+particular whim. I wasn't out to play the blame game, I was more
+interested in how this bug could've slipped through. It turns out that
+this was caused by another internal API call throwing an exception which
+was not handled. This then went up the chain until it became an uncaught
+exception.</p>
+<p><strong>Don't delegate your API contract</strong></p>
+<p>This particular bug was exacerbated by having documentation which
+clearly defined which exceptions it threw under which circumstances. Any
+developer could handle the documented exceptions and feel a false sense
+of security. API designers should strive to always meet their contracts,
+so that API callers don't need to employ defensive programming
+techniques everywhere. If a function says it throws 2 exceptions, it
+should <strong>make damn sure</strong>it throws those 2 and nothing else. This may
+mean that the function employs defensive programming techniques to
+guarantee this, <em>especially</em>if the function is calling other functions
+which aren't exposed or have poorly-defined contracts. Delegating
+responsibility for your API contract to other functions is a bad idea.
+This is amplified by representing errors as exceptions, which
+automatically bubble up unless they are caught. Error codes/statuses may
+have prevented this, but only because it makes handling errors simpler
+in the general case (e.g. <tt class="docutils literal">if (returnValue != null)</tt> or
+<tt class="docutils literal">if (returnValue != <span class="pre">-1)</span></tt>).</p>
+<p>Ultimately, someone has to pick up the pieces when that nested internal
+function fails. Don't let it be the end-user.</p>
+
+            </div><!-- /.entry-content -->
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+      <li><a href="/pages/about.html">About</a></li>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/design.html">design</a></li>
+		<li><a href="/category/misc.html">misc</a></li>
+		<li><a href="/category/tooling.html">tooling</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+	    <li class="tag-4"><a href="/tag/api-design.html">api-design</a></li>
+	    <li class="tag-4"><a href="/tag/build-tools.html">build-tools</a></li>
+	    <li class="tag-4"><a href="/tag/android.html">android</a></li>
+	    <li class="tag-4"><a href="/tag/javascript.html">javascript</a></li>
+</ul>
+
+
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>

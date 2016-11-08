@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>News 'n' Updates | Musings on Programming</title>
+  <title>Musings on Programming</title>
   <link href="http://localhost:4000/feed.xml" rel="self"/>
   <link href="http://localhost:4000/"/>
-  <updated>2016-11-08T22:49:42+00:00</updated>
+  <updated>2016-11-08T23:47:48+00:00</updated>
   <id>http://localhost:4000/</id>
   <author>
     <name></name>

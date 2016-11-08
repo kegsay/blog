@@ -35,6 +35,8 @@ theme: minima
 gems:
   - jekyll-feed
 exclude:
+  - start.sh
+  - stop.sh
   - vendor
   - Gemfile
   - Gemfile.lock

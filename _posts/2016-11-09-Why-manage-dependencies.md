@@ -11,7 +11,7 @@ We're always told:
  - [Hide information](https://en.wikipedia.org/wiki/Information_hiding)!
 
 But have you ever thought "why bother"? It nearly always slows you down, so why don't we just:
- - Keep classes coupled and just use the bits you require.
+ - Keep classes tightly coupled and just use the bits you require. You probably aren't ever going to need the class elsewhere.
  - Make liberal use of singletons accessed directly in code.
  - Leave everything publicly accessible: [we're all consenting adults here](https://www.python.org/), amirite?
 
@@ -33,4 +33,18 @@ Easy, right? Are we missing anything though? Were other parts of the program rel
  - Things that call this function.
  - Things that rely on the return value[s] from this function.
  
- 
+But this is easy: IDEs often have "Find Usage" functions and there's always grep, right<sup>[1](#reflection)</sup>? But what happens if you actually find out you have broken something? You *need* to fix it *before* you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
+ - Work out how this piece of code was using the function before. Work out *what* needs to be changed.
+ - Find the code to fix.
+ - Change it.
+
+Rinse and repeat. On bad codebases this can end up with many disparate code alterations to add in a single change/feature/bugfix. On really bad codebases it may turn out to be **impossible** to realistically make the desired code alteration because it would require completely re-architecting the project. The project ends up [gradually petrified](http://finalfantasy.wikia.com/wiki/Gradual_Petrify_(status)) and there is no realistic way out of it. How could this have been avoided?
+
+
+<a name="reflection">1</a>: *This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. What's more, your compiler (if you have one) probably won't help you either, obscuring your dependency graph.*
+
+## Minimise dependencies
+
+The problem we encountered when changing code was that we kept having to "hop" from one section to another to follow the dependency graph. An easy solution would be to not have code depend on other code, but that simply isn't realistic. There's always dependencies: *something* must be using the code you have written else it shouldn't exist in the first place. If you accept that, then there will always be a dependency graph: **but you can shape how it looks**. In order to do that, you need to have a clear idea of what it looks like. This is very hard to do when all your dependencies are implicit (e.g. accessing singletons directly in functions). This is where the idea of "loosely coupled" components and dependency injection come from. They help to reveal the hidden world of dependencies in your code, so when you want to change it you can do so more easily.
+
+Let me take this moment to emphasise that you can [take this to the extreme](https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition). I **strongly** disagree with complex [DI frameworks](https://projects.spring.io/spring-framework/) that do nothing but obscure your code: [there are clearer alternatives](https://en.wikipedia.org/wiki/Dependency_injection#Constructor_injection) which work in all languages.

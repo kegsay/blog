@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "The software development triangle"
-date:   2016-11-09 22:00:17 +0000
+date:   2016-11-09 18:00:17 +0000
 categories: meta
 ---
 

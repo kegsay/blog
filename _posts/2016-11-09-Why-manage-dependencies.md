@@ -41,9 +41,9 @@ But this is easy: IDEs often have "Find Usage" functions and there's always grep
 Rinse and repeat. On bad codebases this can end up with many disparate code alterations to add in a single change/feature/bugfix. On really bad codebases it may turn out to be **impossible** to realistically make the desired code alteration because it would require completely re-architecting the project. The project ends up [gradually petrified](http://finalfantasy.wikia.com/wiki/Gradual_Petrify_(status)) and there is no realistic way out of it. How could this have been avoided?
 
 
-<a name="deps">1</a>: *It's important to point out that the dependency graph you form when modifying code transcends any kind of "API" you may have cobbled together. It doesn't matter what the public API is if you gut wrench private `_variables` in Python for example: you're depending on it.*
+<a name="deps">1</a>: *It's important to point out that the dependency graph you form transcends any kind of "Public API" you may have cobbled together. It doesn't matter if you use microservices, RPC or monolithic programs: the real API includes the cut corners: from the gut-wrenched variables to the raw SQL queries / HTTP hits which bypass the nice public API.*
 
-<a name="reflection">2</a>: *This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. What's more, your compiler (if you have one) probably won't help you either, obscuring your dependency graph.*
+<a name="reflection">2</a>: *This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. This* **includes use of the [Observer](https://en.wikipedia.org/wiki/Observer_pattern) pattern***, which makes all your dependencies [implicit](https://en.wikipedia.org/wiki/Implicit_invocation) in the name of "decoupling".*
 
 ## Minimise dependencies
 

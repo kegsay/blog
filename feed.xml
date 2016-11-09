@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Musings on Programming</title>
-  <link href="http://localhost:4000/feed.xml" rel="self"/>
-  <link href="http://localhost:4000/"/>
-  <updated>2016-11-09T18:36:51+00:00</updated>
-  <id>http://localhost:4000/</id>
+  <link href="/feed.xml" rel="self"/>
+  <link href="/"/>
+  <updated>2016-11-09T23:19:36+00:00</updated>
+  <id>/</id>
   <author>
     <name></name>
   </author>
@@ -12,10 +12,103 @@
 
   
   <entry>
+    <title>Why manage dependencies?</title>
+    <link href="/complexity/2016/11/09/Why-manage-dependencies.html"/>
+    <updated>2016-11-09T21:00:17+00:00</updated>
+    <id>/complexity/2016/11/09/Why-manage-dependencies</id>
+    <content type="html">&lt;p&gt;We’re always told:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Make your code &lt;a href=&quot;https://en.wikipedia.org/wiki/Loose_coupling&quot;&gt;loosely coupled&lt;/a&gt;!&lt;/li&gt;
+  &lt;li&gt;Use &lt;a href=&quot;https://en.wikipedia.org/wiki/Dependency_injection&quot;&gt;dependency injection&lt;/a&gt;!&lt;/li&gt;
+  &lt;li&gt;&lt;a href=&quot;https://en.wikipedia.org/wiki/Information_hiding&quot;&gt;Hide information&lt;/a&gt;!&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;But have you ever thought “why bother”? It nearly always slows you down, so why don’t we just:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Keep classes tightly coupled and just use the bits you require. You probably aren’t ever going to need the class elsewhere.&lt;/li&gt;
+  &lt;li&gt;Make liberal use of singletons accessed directly in code.&lt;/li&gt;
+  &lt;li&gt;Leave everything publicly accessible: &lt;a href=&quot;https://www.python.org/&quot;&gt;we’re all consenting adults here&lt;/a&gt;, amirite?&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;There are many reasons why we shouldn’t do these things: I’m going to focus solely on the dependency aspects in this post.&lt;/p&gt;
+
+&lt;h2 id=&quot;code-changes-over-time&quot;&gt;Code changes over time&lt;/h2&gt;
+
+&lt;p&gt;First, you need to convince yourself that the demands placed upon the code you write &lt;strong&gt;will&lt;/strong&gt; change over time. Requirements change. Management wants &lt;code class=&quot;highlighter-rouge&quot;&gt;$FEATURE&lt;/code&gt; ready by yesterday. Startups “&lt;a href=&quot;https://en.wikipedia.org/wiki/Corporate_jargon&quot;&gt;pivot&lt;/a&gt;” to new ideas as the market changes. Assumptions you originally made when writing the code are no longer valid and your code needs to be changed to reflect reality. It happens. &lt;strong&gt;It’s inevitable.&lt;/strong&gt; No matter what the reason is, your next step will be to &lt;em&gt;change perfectly working code&lt;/em&gt;. “If it ain’t broke, don’t fix it” isn’t an option here.&lt;/p&gt;
+
+&lt;h2 id=&quot;changing-code&quot;&gt;Changing code&lt;/h2&gt;
+
+&lt;p&gt;To change code you need to:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Work out &lt;em&gt;what&lt;/em&gt; needs to be changed in the code.&lt;/li&gt;
+  &lt;li&gt;Find the exact code to change.&lt;/li&gt;
+  &lt;li&gt;Change it.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Easy, right? Are we missing anything though? Were other parts of the program relying on some behaviour you have now changed? Enter: dependency management. &lt;strong&gt;THIS&lt;/strong&gt; is why dependencies matter. You don’t know what you may have broken when making this change. How do you find out what you may have broken? In most languages, you just find out what calls the function. You begin to form a &lt;strong&gt;dependency graph&lt;/strong&gt;&lt;sup&gt;&lt;a href=&quot;#deps&quot;&gt;1&lt;/a&gt;&lt;/sup&gt; of things that call that function. But that’s the simple bit. The harder bit is working out what preconditions have been potentially broken due to your new code. For example:&lt;/p&gt;
+
+&lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;payPerson&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;payer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;payee&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;nx&quot;&gt;payee&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;balance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;nx&quot;&gt;payer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;balance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;payer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;balance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;sendEmail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;payer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;You are now overdrawn.&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;chargeInterest&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;payer&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;// for the benefit of those who aren't familiar with JS&lt;/span&gt;
+&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;alice&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Alice&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;balance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;bob&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;name&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;Bob&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;na&quot;&gt;balance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;100&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;};&lt;/span&gt;
+    &lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;amount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;200&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// BEGIN new code&lt;/span&gt;
+    &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;alice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;balance&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;amount&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
+        &lt;span class=&quot;nx&quot;&gt;sendEmail&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;alice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;You don't have enough money.&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;return&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+    &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+    &lt;span class=&quot;c1&quot;&gt;// END new code&lt;/span&gt;
+    &lt;span class=&quot;nx&quot;&gt;payPerson&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;alice&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;bob&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;amount&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+&lt;span class=&quot;nx&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+&lt;/code&gt;&lt;/pre&gt;
+&lt;/div&gt;
+&lt;p&gt;The new code prevents Alice from ever getting overdrawn and charged interest. It’s easy to see here, but in a complex codebase this can be really tricky to see how adding code can subtly break preconditions that other code were relying on (in this case, the ability to have a negative balance). This happens relatively infrequently however. Most of the time you can check for broken changes by leaning on your tools: IDEs often have “Find Usage” functions and there’s always grep, right&lt;sup&gt;&lt;a href=&quot;#reflection&quot;&gt;2&lt;/a&gt;&lt;/sup&gt;? But what happens if you actually find out you have broken something? You MUST fix it &lt;strong&gt;before&lt;/strong&gt; you can land &lt;code class=&quot;highlighter-rouge&quot;&gt;$FEATURE&lt;/code&gt;, or else it won’t work. So you do the same 3 steps:&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Work out how this piece of code was using the function before. Work out &lt;em&gt;what&lt;/em&gt; needs to be changed.&lt;/li&gt;
+  &lt;li&gt;Find the code to fix.&lt;/li&gt;
+  &lt;li&gt;Change it.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Rinse and repeat. On bad codebases this can end up with many disparate code alterations to add in a single change/feature/bugfix. On really bad codebases it may turn out to be &lt;strong&gt;impossible&lt;/strong&gt; to realistically make the desired code alteration because it would require completely re-architecting the project. The project ends up &lt;a href=&quot;http://finalfantasy.wikia.com/wiki/Gradual_Petrify_(status)&quot;&gt;gradually petrified&lt;/a&gt; and there is no realistic way out of it. How could this have been avoided?&lt;/p&gt;
+
+&lt;p&gt;&lt;a name=&quot;deps&quot;&gt;1&lt;/a&gt;: &lt;em&gt;It’s important to point out that the dependency graph you form transcends any kind of “Public API” you may have cobbled together. It doesn’t matter if you use microservices, RPC or monolithic programs: the real API includes the cut corners: from the gut-wrenched variables to the raw SQL queries / HTTP hits which bypass the nice public API.&lt;/em&gt;&lt;/p&gt;
+
+&lt;p&gt;&lt;a name=&quot;reflection&quot;&gt;2&lt;/a&gt;: &lt;em&gt;This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. This&lt;/em&gt; &lt;strong&gt;includes use of the &lt;a href=&quot;https://en.wikipedia.org/wiki/Observer_pattern&quot;&gt;Observer&lt;/a&gt; pattern&lt;/strong&gt;&lt;em&gt;, which makes all your dependencies &lt;a href=&quot;https://en.wikipedia.org/wiki/Implicit_invocation&quot;&gt;implicit&lt;/a&gt; in the name of “decoupling”.&lt;/em&gt;&lt;/p&gt;
+
+&lt;h2 id=&quot;minimise-dependencies&quot;&gt;Minimise dependencies&lt;/h2&gt;
+
+&lt;p&gt;The problem we encountered when changing code was that we kept having to “hop” from one section to another to follow the dependency graph. An easy solution would be to not have code depend on other code, but that simply isn’t realistic. There’s always dependencies: &lt;em&gt;something&lt;/em&gt; must be using the code you have written else it shouldn’t exist in the first place. If you accept that, then there will always be a dependency graph: &lt;strong&gt;but you can shape how it looks&lt;/strong&gt;. In order to do that, you need to have a clear idea of what it looks like. This is very hard to do when all your dependencies are implicit (e.g. accessing singletons directly in functions). This is where the idea of “loosely coupled” components and dependency injection come from. They help to reveal the hidden world of dependencies in your code, so when you want to change it you can do so more easily.&lt;/p&gt;
+
+&lt;p&gt;Furthermore, you can reduce the “&lt;a href=&quot;https://en.wikipedia.org/wiki/Law_of_Demeter&quot;&gt;reach&lt;/a&gt;” of a dependency if changes don’t leak beyond the immediate dependents. That is to say, if function A calls function B which calls function C, changes to C should not result in A changing, only B.&lt;/p&gt;
+
+&lt;p&gt;Let me take this moment to emphasise that you can take dependency management &lt;a href=&quot;https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition&quot;&gt;to the extreme&lt;/a&gt;. I &lt;strong&gt;strongly&lt;/strong&gt; disagree with complex &lt;a href=&quot;https://projects.spring.io/spring-framework/&quot;&gt;DI frameworks&lt;/a&gt; that do nothing but obscure your code: &lt;a href=&quot;https://en.wikipedia.org/wiki/Dependency_injection#Constructor_injection&quot;&gt;there are clearer alternatives&lt;/a&gt; which work in all languages.&lt;/p&gt;
+
+&lt;p&gt;If you search for it, you soon realise dependency graphs are everywhere but we don’t know what they look like or how deep they go. You find them in your package managers, your OS, your LAN and your HTTP APIs. You’re literally drowning in implicit and explicit dependencies. But this is the nature of software development. Provided everything works, complex dependency graphs are fine. It’s only when something &lt;a href=&quot;http://www.theregister.co.uk/2016/03/23/npm_left_pad_chaos/&quot;&gt;breaks&lt;/a&gt; do we realise how big the house of cards really is.&lt;/p&gt;
+
+&lt;p&gt;So consider what your dependencies are. Prune the needless ones. Reduce the “reach” of the remainders and keep them clear to see. This takes time. There is no silver bullet.&lt;/p&gt;
+</content>
+  </entry>
+  
+  <entry>
     <title>The software development triangle</title>
-    <link href="http://localhost:4000/meta/2016/11/09/The-software-development-triangle.html"/>
+    <link href="/meta/2016/11/09/The-software-development-triangle.html"/>
     <updated>2016-11-09T18:00:17+00:00</updated>
-    <id>http://localhost:4000/meta/2016/11/09/The-software-development-triangle</id>
+    <id>/meta/2016/11/09/The-software-development-triangle</id>
     <content type="html">&lt;p&gt;Just as there exists a &lt;a href=&quot;https://en.wikipedia.org/wiki/Project_management_triangle&quot;&gt;project management triangle&lt;/a&gt;
 (Fast, Good, Cheap, pick 2), there also exists a software development triangle (Features, Time, Complexity).
 In essence, they are both describing the same thing:&lt;/p&gt;

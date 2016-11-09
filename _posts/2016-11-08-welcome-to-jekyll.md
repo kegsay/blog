@@ -10,18 +10,11 @@ To add new posts, simply add a file in the `_posts` directory that follows the c
 
 Jekyll also offers powerful support for code snippets:
 
-{% highlight ruby %}
-def print_hi(name)
-  puts "Hi, #{name}"
-end
-print_hi('Tom')
-#=> prints 'Hi, Tom' to STDOUT.
-{% endhighlight %}
 
 ```py
 def test(foo):
   # really?
-  print "bar"
+  print "bar bar bar bar what happens if this is a really really long code block because you know i like lines and stuff and maybe want to overrun by quite a bit."
 ```
 
 ```go

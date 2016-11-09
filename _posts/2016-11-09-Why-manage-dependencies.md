@@ -33,7 +33,7 @@ Easy, right? Are we missing anything though? Were other parts of the program rel
  - Things that call this function.
  - Things that rely on the return value[s] from this function.
  
-But this is easy: IDEs often have "Find Usage" functions and there's always grep, right<sup>[1](#reflection)</sup>? But what happens if you actually find out you have broken something? You *need* to fix it *before* you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
+But this is easy: IDEs often have "Find Usage" functions and there's always grep, right<sup>[1](#reflection)</sup>? But what happens if you actually find out you have broken something? You MUST fix it **before** you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
  - Work out how this piece of code was using the function before. Work out *what* needs to be changed.
  - Find the code to fix.
  - Change it.
@@ -48,3 +48,7 @@ Rinse and repeat. On bad codebases this can end up with many disparate code alte
 The problem we encountered when changing code was that we kept having to "hop" from one section to another to follow the dependency graph. An easy solution would be to not have code depend on other code, but that simply isn't realistic. There's always dependencies: *something* must be using the code you have written else it shouldn't exist in the first place. If you accept that, then there will always be a dependency graph: **but you can shape how it looks**. In order to do that, you need to have a clear idea of what it looks like. This is very hard to do when all your dependencies are implicit (e.g. accessing singletons directly in functions). This is where the idea of "loosely coupled" components and dependency injection come from. They help to reveal the hidden world of dependencies in your code, so when you want to change it you can do so more easily.
 
 Let me take this moment to emphasise that you can [take this to the extreme](https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition). I **strongly** disagree with complex [DI frameworks](https://projects.spring.io/spring-framework/) that do nothing but obscure your code: [there are clearer alternatives](https://en.wikipedia.org/wiki/Dependency_injection#Constructor_injection) which work in all languages.
+
+If you search for it, you soon realise dependency graphs are everywhere but we don't know what they look like or how deep they go. You find them in your package managers, your OS, your LAN and your HTTP APIs. You're literally drowning in implicit and explicit dependencies. But this is the nature of software development. Provided everything works, complex dependency graphs are fine. It's only when something [breaks](http://www.theregister.co.uk/2016/03/23/npm_left_pad_chaos/) do we realise how big the house of cards really is.
+
+So consider what your dependencies are. Make sure they are clear. There is no silver bullet.

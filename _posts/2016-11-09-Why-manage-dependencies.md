@@ -29,11 +29,11 @@ To change code you need to:
  - Find the exact code to change.
  - Change it.
 
-Easy, right? Are we missing anything though? Were other parts of the program relying on some behaviour you have now changed? Enter: dependency management. **THIS** is why dependencies matter. You don't know what you may have broken when making this change. How do you find out what you may have broken? In most languages, you just find out what calls the function. You begin to form a **dependency graph** of:
+Easy, right? Are we missing anything though? Were other parts of the program relying on some behaviour you have now changed? Enter: dependency management. **THIS** is why dependencies matter. You don't know what you may have broken when making this change. How do you find out what you may have broken? In most languages, you just find out what calls the function. You begin to form a **dependency graph**<sup>[1](#deps)</sup> of:
  - Things that call this function.
  - Things that rely on the return value[s] from this function.
  
-But this is easy: IDEs often have "Find Usage" functions and there's always grep, right<sup>[1](#reflection)</sup>? But what happens if you actually find out you have broken something? You MUST fix it **before** you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
+But this is easy: IDEs often have "Find Usage" functions and there's always grep, right<sup>[2](#reflection)</sup>? But what happens if you actually find out you have broken something? You MUST fix it **before** you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
  - Work out how this piece of code was using the function before. Work out *what* needs to be changed.
  - Find the code to fix.
  - Change it.
@@ -41,7 +41,9 @@ But this is easy: IDEs often have "Find Usage" functions and there's always grep
 Rinse and repeat. On bad codebases this can end up with many disparate code alterations to add in a single change/feature/bugfix. On really bad codebases it may turn out to be **impossible** to realistically make the desired code alteration because it would require completely re-architecting the project. The project ends up [gradually petrified](http://finalfantasy.wikia.com/wiki/Gradual_Petrify_(status)) and there is no realistic way out of it. How could this have been avoided?
 
 
-<a name="reflection">1</a>: *This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. What's more, your compiler (if you have one) probably won't help you either, obscuring your dependency graph.*
+<a name="deps">1</a>: *It's important to point out that the dependency graph you form when modifying code transcends any kind of "API" you may have cobbled together. It doesn't matter what the public API is if you gut wrench private `_variables` in Python for example: you're depending on it.*
+
+<a name="reflection">2</a>: *This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. What's more, your compiler (if you have one) probably won't help you either, obscuring your dependency graph.*
 
 ## Minimise dependencies
 

@@ -3,7 +3,7 @@
   <title>Musings on Programming</title>
   <link href="/feed.xml" rel="self"/>
   <link href="/"/>
-  <updated>2016-11-09T23:22:33+00:00</updated>
+  <updated>2016-11-09T23:29:15+00:00</updated>
   <id>/</id>
   <author>
     <name></name>
@@ -88,7 +88,7 @@
 
 &lt;p&gt;&lt;a name=&quot;deps&quot;&gt;1&lt;/a&gt;: &lt;em&gt;It’s important to point out that the dependency graph you form transcends any kind of “Public API” you may have cobbled together. It doesn’t matter if you use microservices, RPC or monolithic programs: the real API includes the cut corners: from the gut-wrenched variables to the raw SQL queries / HTTP hits which bypass the nice public API.&lt;/em&gt;&lt;/p&gt;
 
-&lt;p&gt;&lt;a name=&quot;reflection&quot;&gt;2&lt;/a&gt;: &lt;em&gt;This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. This&lt;/em&gt; &lt;strong&gt;includes use of the &lt;a href=&quot;https://en.wikipedia.org/wiki/Observer_pattern&quot;&gt;Observer&lt;/a&gt; pattern&lt;/strong&gt;&lt;em&gt;, which makes all your dependencies &lt;a href=&quot;https://en.wikipedia.org/wiki/Implicit_invocation&quot;&gt;implicit&lt;/a&gt; in the name of “decoupling”.&lt;/em&gt;&lt;/p&gt;
+&lt;p&gt;&lt;a name=&quot;reflection&quot;&gt;2&lt;/a&gt;: &lt;em&gt;This works up to a point: if your project makes liberal use of reflection / metaprogramming then these aids will not help you. This&lt;/em&gt; &lt;strong&gt;includes use of the &lt;a href=&quot;https://en.wikipedia.org/wiki/Observer_pattern&quot;&gt;Observer&lt;/a&gt; pattern&lt;/strong&gt;&lt;em&gt;, which makes all your dependencies &lt;a href=&quot;https://en.wikipedia.org/wiki/Implicit_invocation&quot;&gt;implicit&lt;/a&gt; in the name of “decoupling”.&lt;/em&gt;&lt;/p&gt;
 
 &lt;h2 id=&quot;minimise-dependencies&quot;&gt;Minimise dependencies&lt;/h2&gt;
 

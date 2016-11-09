@@ -71,7 +71,7 @@ Rinse and repeat. On bad codebases this can end up with many disparate code alte
 
 <a name="deps">1</a>: *It's important to point out that the dependency graph you form transcends any kind of "Public API" you may have cobbled together. It doesn't matter if you use microservices, RPC or monolithic programs: the real API includes the cut corners: from the gut-wrenched variables to the raw SQL queries / HTTP hits which bypass the nice public API.*
 
-<a name="reflection">2</a>: *This works up to a point: if your project makes liberal use of reflection/metaprogramming then these aids will not help you. This* **includes use of the [Observer](https://en.wikipedia.org/wiki/Observer_pattern) pattern***, which makes all your dependencies [implicit](https://en.wikipedia.org/wiki/Implicit_invocation) in the name of "decoupling".*
+<a name="reflection">2</a>: *This works up to a point: if your project makes liberal use of reflection / metaprogramming then these aids will not help you. This* **includes use of the [Observer](https://en.wikipedia.org/wiki/Observer_pattern) pattern***, which makes all your dependencies [implicit](https://en.wikipedia.org/wiki/Implicit_invocation) in the name of "decoupling".*
 
 ## Minimise dependencies
 

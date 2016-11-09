@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Why manage dependencies?"
-date: 2016-11-09
+date: 2016-11-09 21:00:17 +0000
 categories: complexity
 ---
 

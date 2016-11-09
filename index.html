@@ -6,8 +6,7 @@
    <link rel="stylesheet" type="text/css" href="/stylesheets/styles.css" >
    <link rel="stylesheet" type="text/css" href="/stylesheets/monokai.css" >
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
-   <script src="javascripts/respond.js"></script>
-   <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+   <meta name="viewport" content="width=device-width, initial-scale=1">
    <link rel="alternate" type="application/atom+xml" href="/feed.xml" title="News Feed">
 </head>
 <body>
@@ -36,38 +35,28 @@
 
 <article class='post'>
   <h1 class='post-title'>
-    <a href="/jekyll/update/2016/11/08/welcome-to-jekyll.html">
-      Welcome to Jekyll!
+    <a href="/meta/2016/11/09/The-software-development-triangle.html">
+      The software development triangle
     </a>
   </h1>
-  <div class="post-date">Nov 8, 2016</div>
-  <p>You’ll find this post in your <code class="highlighter-rouge">_posts</code> directory. Go ahead and edit it and re-build the site to see your changes. You can rebuild the site in many different ways, but the most common way is to run <code class="highlighter-rouge">jekyll serve</code>, which launches a web server and auto-regenerates your site when a file is updated.</p>
+  <div class="post-date">Nov 9, 2016</div>
+  <p>Just as there exists a <a href="https://en.wikipedia.org/wiki/Project_management_triangle">project management triangle</a>
+(Fast, Good, Cheap, pick 2), there also exists a software development triangle (Features, Time, Complexity).
+In essence, they are both describing the same thing:</p>
+<ul>
+  <li>Some measure of time.</li>
+  <li>Some measure of cost (be it physically tangible or <a href="https://en.wikipedia.org/wiki/Technical_debt">otherwise</a>).</li>
+  <li>Some measure of quality.</li>
+</ul>
 
-<p>To add new posts, simply add a file in the <code class="highlighter-rouge">_posts</code> directory that follows the convention <code class="highlighter-rouge">YYYY-MM-DD-name-of-post.ext</code> and includes the necessary front matter. Take a look at the source for this post to get an idea about how it works.</p>
+<p>Good programmers constantly strive (in vain?) to achieve all three goals at once, and this blog will talk a lot about:</p>
+<ul>
+  <li>Doing things faster (tooling, IDEs, code familiarity)</li>
+  <li>Reducing complexity (managing dependencies, bitrot, simplicity)</li>
+  <li>Producing better programs (speed, reliability, actually doing what the intended aim was)</li>
+</ul>
 
-<p>Jekyll also offers powerful support for code snippets:</p>
-
-<figure class="highlight"><pre><code class="language-ruby" data-lang="ruby"><span class="k">def</span> <span class="nf">print_hi</span><span class="p">(</span><span class="nb">name</span><span class="p">)</span>
-  <span class="nb">puts</span> <span class="s2">"Hi, </span><span class="si">#{</span><span class="nb">name</span><span class="si">}</span><span class="s2">"</span>
-<span class="k">end</span>
-<span class="n">print_hi</span><span class="p">(</span><span class="s1">'Tom'</span><span class="p">)</span>
-<span class="c1">#=&gt; prints 'Hi, Tom' to STDOUT.</span></code></pre></figure>
-
-<div class="language-py highlighter-rouge"><pre class="highlight"><code><span class="k">def</span> <span class="nf">test</span><span class="p">(</span><span class="n">foo</span><span class="p">):</span>
-  <span class="c"># really?</span>
-  <span class="k">print</span> <span class="s">"bar"</span>
-</code></pre>
-</div>
-
-<div class="language-go highlighter-rouge"><pre class="highlight"><code><span class="k">func</span><span class="x"> </span><span class="n">gooo</span><span class="p">()</span><span class="x"> </span><span class="p">{</span><span class="x">
-  </span><span class="c">// really?</span><span class="x">
-  </span><span class="k">go</span><span class="x"> </span><span class="n">run</span><span class="p">()</span><span class="x">
-</span><span class="p">}</span><span class="x">
-</span></code></pre>
-</div>
-
-<p>Check out the <a href="http://jekyllrb.com/docs/home">Jekyll docs</a> for more info on how to get the most out of Jekyll. File all bugs/feature requests at <a href="https://github.com/jekyll/jekyll">Jekyll’s GitHub repo</a>. If you have questions, you can ask them on <a href="https://talk.jekyllrb.com/">Jekyll Talk</a>.</p>
-
+<p>So if you’re interested in that sort of thing, read on.</p>
 
 </article>
 

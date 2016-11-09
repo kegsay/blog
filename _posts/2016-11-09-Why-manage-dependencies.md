@@ -29,11 +29,39 @@ To change code you need to:
  - Find the exact code to change.
  - Change it.
 
-Easy, right? Are we missing anything though? Were other parts of the program relying on some behaviour you have now changed? Enter: dependency management. **THIS** is why dependencies matter. You don't know what you may have broken when making this change. How do you find out what you may have broken? In most languages, you just find out what calls the function. You begin to form a **dependency graph**<sup>[1](#deps)</sup> of:
- - Things that call this function.
- - Things that rely on the return value[s] from this function.
- 
-But this is easy: IDEs often have "Find Usage" functions and there's always grep, right<sup>[2](#reflection)</sup>? But what happens if you actually find out you have broken something? You MUST fix it **before** you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
+Easy, right? Are we missing anything though? Were other parts of the program relying on some behaviour you have now changed? Enter: dependency management. **THIS** is why dependencies matter. You don't know what you may have broken when making this change. How do you find out what you may have broken? In most languages, you just find out what calls the function. You begin to form a **dependency graph**<sup>[1](#deps)</sup> of things that call that function. But that's the simple bit. The harder bit is working out what preconditions have been potentially broken due to your new code. For example:
+
+```js
+function payPerson(payer, payee, amount) {
+    payee.balance += amount;
+    payer.balance -= amount;
+    if (payer.balance < 0) {
+        sendEmail(payer, "You are now overdrawn.");
+        chargeInterest(payer);
+    }
+}
+
+// for the benefit of those who aren't familiar with JS
+function main() {
+    let alice = {
+        name: "Alice", balance: 2
+    };
+    let bob = {
+        name: "Bob", balance: 100
+    };
+    let amount = 200;
+    // BEGIN new code
+    if (alice.balance - amount < 0) {
+        sendEmail(alice, "You don't have enough money.");
+        return;
+    }
+    // END new code
+    payPerson(alice, bob, amount);
+}
+
+main();
+```
+The new code prevents Alice from ever getting overdrawn and charged interest. It's easy to see here, but in a complex codebase this can be really tricky to see how adding code can subtly break preconditions that other code were relying on (in this case, the ability to have a negative balance). This happens relatively infrequently however. Most of the time you can check for broken changes by leaning on your tools: IDEs often have "Find Usage" functions and there's always grep, right<sup>[2](#reflection)</sup>? But what happens if you actually find out you have broken something? You MUST fix it **before** you can land `$FEATURE`, or else it won't work. So you do the same 3 steps:
  - Work out how this piece of code was using the function before. Work out *what* needs to be changed.
  - Find the code to fix.
  - Change it.

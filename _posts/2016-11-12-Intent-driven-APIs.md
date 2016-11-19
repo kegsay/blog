@@ -21,7 +21,8 @@ idea of **intent-driven** API design. That is what this post is about.
 
 In essence, intent-driven API design involves writing APIs to work in a way which meets the intention
 of the user. This sounds obvious, so let me explain with some fictitious examples. What we'll notice is
-that this intent is often far away from reality, and therein lies the problem.
+that the intent of the user is often very different from the actual implementation details, and
+therein lies the problem.
 
 ### Example: VoIP
 Let's say we're making a VoIP API. We can place calls, receive calls, answer/reject calls and hangup.
@@ -31,7 +32,7 @@ function look like? *The following examples assumes knowledge of coroutines / as
 
 ```js
 class Call {
-    hangup(): void {
+    hangup() {
         if (this.dataStream) {
             this.dataStream.tearDown();
         }
@@ -73,12 +74,11 @@ class Call {
     
     async answer() {
         if (this._answering) {
-            throw new Error("Already answering"));
+            throw new Error("Already answering");
         }
         this._answering = true;
         // assume setup cannot fail
-        let dataStream = await this._setupDataStream();
-        this.dataStream = dataStream;
+        this.dataStream = await this._setupDataStream();
         this._answering = false;
     }
 }
@@ -121,7 +121,7 @@ async onHangupClick() {
 
 Now you might have noticed a pattern here: `answerPromise` and `Call._answering` are *the same thing*. The user
 of the API is effectively **copying over the state machine** of `Call` so they can call the right methods at the
-right times. This is awful, but a lot of APIs do this. How else could this be done?
+right times. This is awful, but a lot of APIs do this. How else could this have been done?
 
 Let's revisit our choice and instead decide to accomodate their whim. What does `Call` naturally look like now?
 
@@ -156,5 +156,87 @@ class Call {
 
 We've shifted the complexity to the `Call` object now, so what does the user's code look like now?
 
+```js
+async onAnswerClick() {
+    await call.answer();
+    // change the UI
+}
+
+async onHangupClick() {
+    await call.hangup();
+    // change the UI
+}
+```
+
+That's a lot better! They no longer need to remember what state the call is in, and it greatly simplifies their code.
+
+### Example: Instant Messaging
+Let's say we're making an IM API. We have the concept of "rooms". Members need to inside a "room" before they can speak,
+and their message goes to every member of the room. Members may have different privilege levels which prevent them from
+speaking. What does the speak function look like? *These examples omits all kinds of errors and asynchronous concerns
+for simplicity*.
+
+```js
+class Room {
+    speak(text) {
+        if (!this.isInsideRoom() || !this.hasPermissionToSpeak()) {
+            throw new Error("You cannot speak in this room.");
+        }
+        // send message to the room
+    }
+}
+```
+
+How might a developer use this function? Perhaps when they hit a "SEND" button:
+
+```js
+onSendClick() {
+    let text = this.getTextFromInputBox();
+    room.speak(text);
+}
+```
+
+But this will throw an error if they aren't inside the room or have permission to speak. So they need to check this first:
+
+```js
+onSendClick() {
+    if (!room.isInsideRoom()) {
+        room.enter(); // assume this can never fail and is synchronous
+    }
+    if (!room.hasPermissionToSpeak()) {
+        room.requestPermissionToSpeak(); // assume this can never fail and is synchronous
+    }
+    let text = this.getTextFromInputBox();
+    room.speak(text);
+}
+```
+
+Notice the pattern? They're performing the exact same checks as `speak(text)` because the API **is forcing them to**. This
+is just a very simple example. It can quickly spiral out of control. Perhaps you need to already be in the room before you
+can request permission to speak (so ordering now becomes important). The user of this API now has to know a great deal about
+the internal state of `Room` in order to actually use it. How might this be improved? Helper methods are the key here:
+
+```js
+class Room {
+    forceSpeak(text) {
+        if (!room.isInsideRoom()) {
+            room.enter();
+        }
+        if (!room.hasPermissionToSpeak()) {
+            room.requestPermissionToSpeak();
+        }
+        room.speak(text);
+    }
+}
+```
+
+This means that the naive `onSendClick` we had at the beginning would work with this function:
+
+```js
+onSendClick() {
+    let text = this.getTextFromInputBox();
+    room.forceSpeak(text);
+}
+```
 
 ## Conclusion

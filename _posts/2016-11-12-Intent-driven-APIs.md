@@ -19,124 +19,142 @@ idea of **intent-driven** API design. That is what this post is about.
 
 ## What is Intent-Driven API design
 
-In essence, intent-driven API design is designing APIs to work in a way which meets the intention
-of the user. This sounds obvious, so let me explain with some examples. I'm going to pick on the
-[WebRTC API](https://w3c.github.io/webrtc-pc/#simple-peer-to-peer-example) for browsers because I've used
-it in the past and it neatly illustrates the idea. This API allows audio and video to flow directly between
-two browsers. It's primarily used for video calling directly from a browser.
-Here is the "simple peer-to-peer example":
+In essence, intent-driven API design involves writing APIs to work in a way which meets the intention
+of the user. This sounds obvious, so let me explain with some fictitious examples. What we'll notice is
+that this intent is often far away from reality, and therein lies the problem.
+
+### Example: VoIP
+Let's say we're making a VoIP API. We can place calls, receive calls, answer/reject calls and hangup.
+These operate on underlying "data streams" which need to be set up and torn down when the call is
+answered/hung up, and it might take some time to do both of those operations. What might the hangup
+function look like? *The following examples assumes knowledge of coroutines / async functions*.
 
 ```js
-var signalingChannel = new SignalingChannel();
-var configuration = { "iceServers": [{ "urls": "stuns:stun.example.org" }] };
-var pc;
-
-// call start() to initiate
-function start() {
-    pc = new RTCPeerConnection(configuration);
-
-    // send any ice candidates to the other peer
-    pc.onicecandidate = function (evt) {
-        signalingChannel.send(JSON.stringify({ "candidate": evt.candidate }));
-    };
-
-    // let the "negotiationneeded" event trigger offer generation
-    pc.onnegotiationneeded = function () {
-        pc.createOffer().then(function (offer) {
-            return pc.setLocalDescription(offer);
-        })
-        .then(function () {
-            // send the offer to the other peer
-            signalingChannel.send(JSON.stringify({ "desc": pc.localDescription }));
-        })
-        .catch(logError);
-    };
-
-    // once remote video track arrives, show it in the remote video element
-    pc.ontrack = function (evt) {
-        if (evt.track.kind === "video")
-          remoteView.srcObject = evt.streams[0];
-    };
-
-    // get a local stream, show it in a self-view and add it to be sent
-    navigator.mediaDevices.getUserMedia({ "audio": true, "video": true })
-        .then(function (stream) {
-            selfView.srcObject = stream;
-            pc.addTrack(stream.getAudioTracks()[0], stream);
-            pc.addTrack(stream.getVideoTracks()[0], stream);
-        })
-        .catch(logError);
-}
-
-signalingChannel.onmessage = function (evt) {
-    if (!pc)
-        start();
-
-    var message = JSON.parse(evt.data);
-    if (message.desc) {
-        var desc = message.desc;
-
-        // if we get an offer, we need to reply with an answer
-        if (desc.type == "offer") {
-            pc.setRemoteDescription(desc).then(function () {
-                return pc.createAnswer();
-            })
-            .then(function (answer) {
-                return pc.setLocalDescription(answer);
-            })
-            .then(function () {
-                var str = JSON.stringify({ "desc": pc.localDescription });
-                signalingChannel.send(str);
-            })
-            .catch(logError);
-        } else if (desc.type == "answer") {
-            pc.setRemoteDescription(desc).catch(logError);
-        } else {
-            log("Unsupported SDP type. Your code may differ here.");
+class Call {
+    hangup(): void {
+        if (this.dataStream) {
+            this.dataStream.tearDown();
         }
-    } else
-        pc.addIceCandidate(message.candidate).catch(logError);
-};
-
-function logError(error) {
-    log(error.name + ": " + error.message);
+    }
 }
 ```
 
-Now WebRTC has a *lot* to do. It needs ICE candidates, exchanging offer/answers to negotiate which
-codecs to use, lots of things which are very complicated and very much *required* in order to set
-up a call. But what is the intent of the average user of this API? What are they thinking when they
-use this API? **What does the developer using this API want to actually do?** For WebRTC, 90% of the
-time the answer will be setting up a video/audio call. That's it. What does that entail? It requires:
- - Ability to talk to a remote IP address.
- - Ability to receive incoming calls.
- - Ability to answer/reject a call.
- - Ability to hang up an active call.
-
-When a developer decides to use the WebRTC API, they will need to work out how to do these things. They
-may not know the WebRTC stack. They may not know STUN/ICE/RTC/SRTP/$acronym, they *just* want to make a call.
-API designers should strive to make their APIs easy to use. We know about abstraction. We know the idea
-that "outsiders" shouldn't need to know or care about X, Y or Z and yet we still design APIs which leak
-these details like a sieve. Here's what [MDN](https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/WebRTC_Basics#Answering_a_call)
-says you need to do in order to answer a call:
+Aha, but `tearDown` might take some time. We probably want to tell the user when they have successfully hung up, right?
+So let's fix that up:
 
 ```js
-var offer = getOfferFromFriend();
-navigator.getUserMedia({video: true}, function(stream) {
-  pc.onaddstream = e => video.src = URL.createObjectURL(e.stream);
-  pc.addStream(stream);
-
-  pc.setRemoteDescription(new RTCSessionDescription(offer), function() {
-    pc.createAnswer(function(answer) {
-      pc.setLocalDescription(answer, function() {
-        // send the answer to a server to be forwarded back to the caller (you)
-      }, error);
-    }, error);
-  }, error);
-});
+class Call {
+    async hangup() {
+        if (this.dataStream) {
+            await this.dataStream.tearDown();
+        }
+    }
+}
 ```
 
-Now if you know WebRTC, you may be thinking "how does it get any simpler than this?". If you don't know
-WebRTC, you may be thinking "what's user media?" or "what's a session description"?
+Great! Now what might an actual developer *do* with this function? Well, they might call `hangup()` in response to a
+button click on the UI, and change the UI when the call has finished:
+
+```js
+onHangupClick() {
+    await call.hangup();
+    // change the UI
+}
+```
+
+Now comes the fun part. What does the `answer` function look like? We need to be careful not to set the stream up
+twice. Perhaps:
+
+```js
+class Call {
+    constructor() {
+        this._answering = false;
+    }
+    
+    async answer() {
+        if (this._answering) {
+            throw new Error("Already answering"));
+        }
+        this._answering = true;
+        // assume setup cannot fail
+        let dataStream = await this._setupDataStream();
+        this.dataStream = dataStream;
+        this._answering = false;
+    }
+}
+```
+
+We have just created a racey API. What happens if the user does:
+
+```js
+let call = new Call();
+call.answer();
+call.hangup();
+```
+
+The `hangup()` code will do nothing because there is no data stream yet. This is a fact of life.
+The streams take time to set up and tear down, and the API is just telling the user the whole truth and nothing
+but the truth. The problem is that most of the time the user of the API doesn't care about the truth. They just
+want to hangup the call. This is where you have a choice: Do you accomodate their whim and gloss over the fact
+that these things take time, or do you tell them to [RTFM](https://en.wikipedia.org/wiki/RTFM) because this is
+how it is. If we do **NOT** accomodate their whim, what happens? They have this bug they want to fix. How can
+they fix this? Perhaps they should wait until the answer completes first:
+
+```js
+let answerPromise = null;
+
+async onAnswerClick() {
+    answerPromise = call.answer();
+    await answerPromise;
+    answerPromise = null;
+    // change the UI
+}
+
+async onHangupClick() {
+    if (answerPromise) {
+        await answerPromise;
+    }
+    await call.hangup();
+    // change the UI
+}
+```
+
+Now you might have noticed a pattern here: `answerPromise` and `Call._answering` are *the same thing*. The user
+of the API is effectively **copying over the state machine** of `Call` so they can call the right methods at the
+right times. This is awful, but a lot of APIs do this. How else could this be done?
+
+Let's revisit our choice and instead decide to accomodate their whim. What does `Call` naturally look like now?
+
+```js
+class Call {
+    constructor() {
+        this._answerPromise = null;
+    }
+    
+    async answer() {
+        // if not answering a call
+        if (!this._answerPromise) {
+            this._answerPromise = this._setupDataStream();
+        }
+        this.dataStream = await this._answerPromise;
+        this._answerPromise = null;
+    }
+    
+    async hangup() {
+        let dataStream = this.dataStream;
+        // if answering a call
+        if (!dataStream && this._answerPromise) {
+            dataStream = await this._answerPromise;
+        }
+        if (!dataStream) {
+            return;
+        }
+        await dataStream.tearDown();
+    }
+}
+```
+
+We've shifted the complexity to the `Call` object now, so what does the user's code look like now?
+
 
 ## Conclusion

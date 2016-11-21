@@ -57,7 +57,7 @@ Great! Now what might an actual developer *do* with this function? Well, they mi
 button click on the UI, and change the UI when the call has finished:
 
 ```js
-onHangupClick() {
+async onHangupClick() {
     await call.hangup();
     // change the UI
 }
@@ -73,8 +73,8 @@ class Call {
     }
     
     async answer() {
-        if (this._answering) {
-            throw new Error("Already answering");
+        if (this._answering || this.dataStream) {
+            throw new Error("Already answering/answered");
         }
         this._answering = true;
         // assume setup cannot fail
@@ -240,3 +240,16 @@ onSendClick() {
 ```
 
 ## Conclusion
+
+There are a few guiding principles you can apply to get a good feel for if you're accomodating the
+user's intent. Ask yourself:
+ - Does the **ordering** of function calls matter? If so, why not have a helper method Do The Right Thing
+   for your users?
+ - Are there **timing** issues with your functions? Does everything blow up if you call a function at
+   "the wrong time"? Can you can hide away these timing problems from your users?
+ - Does it matter which **thread** you call a function on? If you always need to be on, say, the UI thread
+   in order to call function X, can you dispatch inside the function and save your users the pain?
+
+Whilst most programming languages have got the idea of `input -> do stuff -> output` down well, these
+three points are much more hand-wavey. API users have to *rely* on documentation to let them know when, how
+and where they can call functions. Try to make it easy on them.

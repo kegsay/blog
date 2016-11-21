@@ -126,9 +126,9 @@ twice. Perhaps:</p>
 <p>The <code class="highlighter-rouge">hangup()</code> code will do nothing because there is no data stream yet. This is a fact of life.
 The streams take time to set up and tear down, and the API is just telling the user the whole truth and nothing
 but the truth. The problem is that most of the time the user of the API doesn’t care about the truth. They just
-want to hangup the call. This is where you have a choice: Do you accomodate their whim and gloss over the fact
+want to hangup the call. This is where you have a choice: Do you accommodate their whim and gloss over the fact
 that these things take time, or do you tell them to <a href="https://en.wikipedia.org/wiki/RTFM">RTFM</a> because this is
-how it is. If we do <strong>NOT</strong> accomodate their whim, what happens? They have this bug they want to fix. How can
+how it is. If we do <strong>NOT</strong> accommodate their whim, what happens? They have this bug they want to fix. How can
 they fix this? Perhaps they should wait until the answer completes first:</p>
 
 <div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">let</span> <span class="nx">answerPromise</span> <span class="o">=</span> <span class="kc">null</span><span class="p">;</span>
@@ -154,7 +154,7 @@ they fix this? Perhaps they should wait until the answer completes first:</p>
 of the API is effectively <strong>copying over the state machine</strong> of <code class="highlighter-rouge">Call</code> so they can call the right methods at the
 right times. This is awful, but a lot of APIs do this. How else could this have been done?</p>
 
-<p>Let’s revisit our choice and instead decide to accomodate their whim. What does <code class="highlighter-rouge">Call</code> naturally look like now?</p>
+<p>Let’s revisit our choice and instead decide to accommodate their whim. What does <code class="highlighter-rouge">Call</code> naturally look like now?</p>
 
 <div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kr">class</span> <span class="nx">Call</span> <span class="p">{</span>
     <span class="nx">constructor</span><span class="p">()</span> <span class="p">{</span>
@@ -272,7 +272,7 @@ the internal state of <code class="highlighter-rouge">Room</code> in order to ac
 
 <h2 id="conclusion">Conclusion</h2>
 
-<p>There are a few guiding principles you can apply to get a good feel for if you’re accomodating the
+<p>There are a few guiding principles you can apply to get a good feel for if you’re accommodating the
 user’s intent. Ask yourself:</p>
 <ul>
   <li>Does the <strong>ordering</strong> of function calls matter? If so, why not have a helper method Do The Right Thing

@@ -3,7 +3,7 @@
   <title>Musings on Programming</title>
   <link href="/feed.xml" rel="self"/>
   <link href="/"/>
-  <updated>2016-11-21T21:47:28+00:00</updated>
+  <updated>2016-11-21T22:09:41+00:00</updated>
   <id>/</id>
   <author>
     <name></name>
@@ -108,9 +108,9 @@ twice. Perhaps:&lt;/p&gt;
 &lt;p&gt;The &lt;code class=&quot;highlighter-rouge&quot;&gt;hangup()&lt;/code&gt; code will do nothing because there is no data stream yet. This is a fact of life.
 The streams take time to set up and tear down, and the API is just telling the user the whole truth and nothing
 but the truth. The problem is that most of the time the user of the API doesn’t care about the truth. They just
-want to hangup the call. This is where you have a choice: Do you accomodate their whim and gloss over the fact
+want to hangup the call. This is where you have a choice: Do you accommodate their whim and gloss over the fact
 that these things take time, or do you tell them to &lt;a href=&quot;https://en.wikipedia.org/wiki/RTFM&quot;&gt;RTFM&lt;/a&gt; because this is
-how it is. If we do &lt;strong&gt;NOT&lt;/strong&gt; accomodate their whim, what happens? They have this bug they want to fix. How can
+how it is. If we do &lt;strong&gt;NOT&lt;/strong&gt; accommodate their whim, what happens? They have this bug they want to fix. How can
 they fix this? Perhaps they should wait until the answer completes first:&lt;/p&gt;
 
 &lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kd&quot;&gt;let&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;answerPromise&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;null&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
@@ -136,7 +136,7 @@ they fix this? Perhaps they should wait until the answer completes first:&lt;/p&
 of the API is effectively &lt;strong&gt;copying over the state machine&lt;/strong&gt; of &lt;code class=&quot;highlighter-rouge&quot;&gt;Call&lt;/code&gt; so they can call the right methods at the
 right times. This is awful, but a lot of APIs do this. How else could this have been done?&lt;/p&gt;
 
-&lt;p&gt;Let’s revisit our choice and instead decide to accomodate their whim. What does &lt;code class=&quot;highlighter-rouge&quot;&gt;Call&lt;/code&gt; naturally look like now?&lt;/p&gt;
+&lt;p&gt;Let’s revisit our choice and instead decide to accommodate their whim. What does &lt;code class=&quot;highlighter-rouge&quot;&gt;Call&lt;/code&gt; naturally look like now?&lt;/p&gt;
 
 &lt;div class=&quot;language-js highlighter-rouge&quot;&gt;&lt;pre class=&quot;highlight&quot;&gt;&lt;code&gt;&lt;span class=&quot;kr&quot;&gt;class&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Call&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
     &lt;span class=&quot;nx&quot;&gt;constructor&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;{&lt;/span&gt;
@@ -254,7 +254,7 @@ the internal state of &lt;code class=&quot;highlighter-rouge&quot;&gt;Room&lt;/c
 
 &lt;h2 id=&quot;conclusion&quot;&gt;Conclusion&lt;/h2&gt;
 
-&lt;p&gt;There are a few guiding principles you can apply to get a good feel for if you’re accomodating the
+&lt;p&gt;There are a few guiding principles you can apply to get a good feel for if you’re accommodating the
 user’s intent. Ask yourself:&lt;/p&gt;
 &lt;ul&gt;
   &lt;li&gt;Does the &lt;strong&gt;ordering&lt;/strong&gt; of function calls matter? If so, why not have a helper method Do The Right Thing

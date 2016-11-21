@@ -95,9 +95,9 @@ call.hangup();
 The `hangup()` code will do nothing because there is no data stream yet. This is a fact of life.
 The streams take time to set up and tear down, and the API is just telling the user the whole truth and nothing
 but the truth. The problem is that most of the time the user of the API doesn't care about the truth. They just
-want to hangup the call. This is where you have a choice: Do you accomodate their whim and gloss over the fact
+want to hangup the call. This is where you have a choice: Do you accommodate their whim and gloss over the fact
 that these things take time, or do you tell them to [RTFM](https://en.wikipedia.org/wiki/RTFM) because this is
-how it is. If we do **NOT** accomodate their whim, what happens? They have this bug they want to fix. How can
+how it is. If we do **NOT** accommodate their whim, what happens? They have this bug they want to fix. How can
 they fix this? Perhaps they should wait until the answer completes first:
 
 ```js
@@ -123,7 +123,7 @@ Now you might have noticed a pattern here: `answerPromise` and `Call._answering`
 of the API is effectively **copying over the state machine** of `Call` so they can call the right methods at the
 right times. This is awful, but a lot of APIs do this. How else could this have been done?
 
-Let's revisit our choice and instead decide to accomodate their whim. What does `Call` naturally look like now?
+Let's revisit our choice and instead decide to accommodate their whim. What does `Call` naturally look like now?
 
 ```js
 class Call {
@@ -241,7 +241,7 @@ onSendClick() {
 
 ## Conclusion
 
-There are a few guiding principles you can apply to get a good feel for if you're accomodating the
+There are a few guiding principles you can apply to get a good feel for if you're accommodating the
 user's intent. Ask yourself:
  - Does the **ordering** of function calls matter? If so, why not have a helper method Do The Right Thing
    for your users?

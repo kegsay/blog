@@ -2,7 +2,7 @@
 <html>
 <head>
    <meta charset="utf-8">
-   <title>Welcome - Musings on Programming</title>
+   <title>Intent-driven APIs - Musings on Programming</title>
    <link rel="stylesheet" type="text/css" href="/stylesheets/styles.css" >
    <link rel="stylesheet" type="text/css" href="/stylesheets/monokai.css" >
    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script>
@@ -31,14 +31,8 @@
 
 <div class="content_wrapper">
 <section>
-  
-
-<article class='post'>
-  <h1 class='post-title'>
-    <a href="/complexity/2016/11/12/Intent-driven-APIs.html">
-      Intent-driven APIs
-    </a>
-  </h1>
+  <article class='post'>
+  <h1 class='post-title'>Intent-driven APIs</h1>
   <div class="post-date">Nov 12, 2016</div>
   <p>API design is Hard. There are hundreds of decisions you need to make when designing a new API.
 There’s a long list of software design philosophies which can help you make these decisions such as:</p>
@@ -294,134 +288,6 @@ three points are much more hand-wavey. API users have to <em>rely</em> on docume
 and where they can call functions. Try to make it easy on them.</p>
 
 </article>
-
-
-
-<article class='post'>
-  <h1 class='post-title'>
-    <a href="/complexity/2016/11/09/Why-manage-dependencies.html">
-      Why manage dependencies?
-    </a>
-  </h1>
-  <div class="post-date">Nov 9, 2016</div>
-  <p>We’re always told:</p>
-<ul>
-  <li>Make your code <a href="https://en.wikipedia.org/wiki/Loose_coupling">loosely coupled</a>!</li>
-  <li>Use <a href="https://en.wikipedia.org/wiki/Dependency_injection">dependency injection</a>!</li>
-  <li><a href="https://en.wikipedia.org/wiki/Information_hiding">Hide information</a>!</li>
-</ul>
-
-<p>But have you ever thought “why bother”? It nearly always slows you down, so why don’t we just:</p>
-<ul>
-  <li>Keep classes tightly coupled and just use the bits you require. You probably aren’t ever going to need the class elsewhere.</li>
-  <li>Make liberal use of singletons accessed directly in code.</li>
-  <li>Leave everything publicly accessible: <a href="https://www.python.org/">we’re all consenting adults here</a>, amirite?</li>
-</ul>
-
-<p>There are many reasons why we shouldn’t do these things: I’m going to focus solely on the dependency aspects in this post.</p>
-
-<h2 id="code-changes-over-time">Code changes over time</h2>
-
-<p>First, you need to convince yourself that the demands placed upon the code you write <strong>will</strong> change over time. Requirements change. Management wants <code class="highlighter-rouge">$FEATURE</code> ready by yesterday. Startups “<a href="https://en.wikipedia.org/wiki/Corporate_jargon">pivot</a>” to new ideas as the market changes. Assumptions you originally made when writing the code are no longer valid and your code needs to be changed to reflect reality. It happens. <strong>It’s inevitable.</strong> No matter what the reason is, your next step will be to <em>change perfectly working code</em>. “If it ain’t broke, don’t fix it” isn’t an option here.</p>
-
-<h2 id="changing-code">Changing code</h2>
-
-<p>To change code you need to:</p>
-<ul>
-  <li>Work out <em>what</em> needs to be changed in the code.</li>
-  <li>Find the exact code to change.</li>
-  <li>Change it.</li>
-</ul>
-
-<p>Easy, right? Are we missing anything though? Were other parts of the program relying on some behaviour you have now changed? Enter: dependency management. <strong>THIS</strong> is why dependencies matter. You don’t know what you may have broken when making this change. How do you find out what you may have broken? In most languages, you just find out what calls the function. You begin to form a <strong>dependency graph</strong><sup><a href="#deps">1</a></sup> of things that call that function. But that’s the simple bit. The harder bit is working out what preconditions have been potentially broken due to your new code. For example:</p>
-
-<div class="language-js highlighter-rouge"><pre class="highlight"><code><span class="kd">function</span> <span class="nx">payPerson</span><span class="p">(</span><span class="nx">payer</span><span class="p">,</span> <span class="nx">payee</span><span class="p">,</span> <span class="nx">amount</span><span class="p">)</span> <span class="p">{</span>
-    <span class="nx">payee</span><span class="p">.</span><span class="nx">balance</span> <span class="o">+=</span> <span class="nx">amount</span><span class="p">;</span>
-    <span class="nx">payer</span><span class="p">.</span><span class="nx">balance</span> <span class="o">-=</span> <span class="nx">amount</span><span class="p">;</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">payer</span><span class="p">.</span><span class="nx">balance</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">sendEmail</span><span class="p">(</span><span class="nx">payer</span><span class="p">,</span> <span class="s2">"You are now overdrawn."</span><span class="p">);</span>
-        <span class="nx">chargeInterest</span><span class="p">(</span><span class="nx">payer</span><span class="p">);</span>
-    <span class="p">}</span>
-<span class="p">}</span>
-
-<span class="c1">// for the benefit of those who aren't familiar with JS</span>
-<span class="kd">function</span> <span class="nx">main</span><span class="p">()</span> <span class="p">{</span>
-    <span class="kd">let</span> <span class="nx">alice</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="na">name</span><span class="p">:</span> <span class="s2">"Alice"</span><span class="p">,</span> <span class="na">balance</span><span class="p">:</span> <span class="mi">2</span>
-    <span class="p">};</span>
-    <span class="kd">let</span> <span class="nx">bob</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="na">name</span><span class="p">:</span> <span class="s2">"Bob"</span><span class="p">,</span> <span class="na">balance</span><span class="p">:</span> <span class="mi">100</span>
-    <span class="p">};</span>
-    <span class="kd">let</span> <span class="nx">amount</span> <span class="o">=</span> <span class="mi">200</span><span class="p">;</span>
-    <span class="c1">// BEGIN new code</span>
-    <span class="k">if</span> <span class="p">(</span><span class="nx">alice</span><span class="p">.</span><span class="nx">balance</span> <span class="o">-</span> <span class="nx">amount</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
-        <span class="nx">sendEmail</span><span class="p">(</span><span class="nx">alice</span><span class="p">,</span> <span class="s2">"You don't have enough money."</span><span class="p">);</span>
-        <span class="k">return</span><span class="p">;</span>
-    <span class="p">}</span>
-    <span class="c1">// END new code</span>
-    <span class="nx">payPerson</span><span class="p">(</span><span class="nx">alice</span><span class="p">,</span> <span class="nx">bob</span><span class="p">,</span> <span class="nx">amount</span><span class="p">);</span>
-<span class="p">}</span>
-
-<span class="nx">main</span><span class="p">();</span>
-</code></pre>
-</div>
-<p>The new code prevents Alice from ever getting overdrawn and charged interest. It’s easy to see here, but in a complex codebase this can be really tricky to see how adding code can subtly break preconditions that other code were relying on (in this case, the ability to have a negative balance). This happens relatively infrequently however. Most of the time you can check for broken changes by leaning on your tools: IDEs often have “Find Usage” functions and there’s always grep, right<sup><a href="#reflection">2</a></sup>? But what happens if you actually find out you have broken something? You MUST fix it <strong>before</strong> you can land <code class="highlighter-rouge">$FEATURE</code>, or else it won’t work. So you do the same 3 steps:</p>
-<ul>
-  <li>Work out how this piece of code was using the function before. Work out <em>what</em> needs to be changed.</li>
-  <li>Find the code to fix.</li>
-  <li>Change it.</li>
-</ul>
-
-<p>Rinse and repeat. On bad codebases this can end up with many disparate code alterations to add in a single change/feature/bugfix. On really bad codebases it may turn out to be <strong>impossible</strong> to realistically make the desired code alteration because it would require completely re-architecting the project. The project ends up <a href="http://finalfantasy.wikia.com/wiki/Gradual_Petrify_(status)">gradually petrified</a> and there is no realistic way out of it. How could this have been avoided?</p>
-
-<p><a name="deps">1</a>: <em>It’s important to point out that the dependency graph you form transcends any kind of “Public API” you may have cobbled together. It doesn’t matter if you use microservices, RPC or monolithic programs: the real API includes the cut corners: from the gut-wrenched variables to the raw SQL queries / HTTP hits which bypass the nice public API.</em></p>
-
-<p><a name="reflection">2</a>: <em>This works up to a point: if your project makes liberal use of reflection / metaprogramming then these aids will not help you. This</em> <strong>includes use of the <a href="https://en.wikipedia.org/wiki/Observer_pattern">Observer</a> pattern</strong><em>, which makes all your dependencies <a href="https://en.wikipedia.org/wiki/Implicit_invocation">implicit</a> in the name of “decoupling”.</em></p>
-
-<h2 id="minimise-dependencies">Minimise dependencies</h2>
-
-<p>The problem we encountered when changing code was that we kept having to “hop” from one section to another to follow the dependency graph. An easy solution would be to not have code depend on other code, but that simply isn’t realistic. There’s always dependencies: <em>something</em> must be using the code you have written else it shouldn’t exist in the first place. If you accept that, then there will always be a dependency graph: <strong>but you can shape how it looks</strong>. In order to do that, you need to have a clear idea of what it looks like. This is very hard to do when all your dependencies are implicit (e.g. accessing singletons directly in functions). This is where the idea of “loosely coupled” components and dependency injection come from. They help to reveal the hidden world of dependencies in your code, so when you want to change it you can do so more easily.</p>
-
-<p>Furthermore, you can reduce the “<a href="https://en.wikipedia.org/wiki/Law_of_Demeter">reach</a>” of a dependency if changes don’t leak beyond the immediate dependents. That is to say, if function A calls function B which calls function C, changes to C should not result in A changing, only B.</p>
-
-<p>Let me take this moment to emphasise that you can take dependency management <a href="https://github.com/EnterpriseQualityCoding/FizzBuzzEnterpriseEdition">to the extreme</a>. I <strong>strongly</strong> disagree with complex <a href="https://projects.spring.io/spring-framework/">DI frameworks</a> that do nothing but obscure your code: <a href="https://en.wikipedia.org/wiki/Dependency_injection#Constructor_injection">there are clearer alternatives</a> which work in all languages.</p>
-
-<p>If you search for it, you soon realise dependency graphs are everywhere but we don’t know what they look like or how deep they go. You find them in your package managers, your OS, your LAN and your HTTP APIs. You’re literally drowning in implicit and explicit dependencies. But this is the nature of software development. Provided everything works, complex dependency graphs are fine. It’s only when something <a href="http://www.theregister.co.uk/2016/03/23/npm_left_pad_chaos/">breaks</a> do we realise how big the house of cards really is.</p>
-
-<p>So consider what your dependencies are. Prune the needless ones. Reduce the “reach” of the remainders and keep them clear to see. This takes time. There is no silver bullet.</p>
-
-</article>
-
-
-
-<article class='post'>
-  <h1 class='post-title'>
-    <a href="/meta/2016/11/09/The-software-development-triangle.html">
-      The software development triangle
-    </a>
-  </h1>
-  <div class="post-date">Nov 9, 2016</div>
-  <p>Just as there exists a <a href="https://en.wikipedia.org/wiki/Project_management_triangle">project management triangle</a>
-(Fast, Good, Cheap, pick 2), there also exists a software development triangle (Features, Time, Complexity).
-In essence, they are both describing the same thing:</p>
-<ul>
-  <li>Some measure of time.</li>
-  <li>Some measure of cost (be it physically tangible or <a href="https://en.wikipedia.org/wiki/Technical_debt">otherwise</a>).</li>
-  <li>Some measure of quality.</li>
-</ul>
-
-<p>Good programmers constantly strive (in vain?) to achieve all three goals at once, and this blog will talk a lot about:</p>
-<ul>
-  <li>Doing things faster (tooling, IDEs, code familiarity)</li>
-  <li>Reducing complexity (managing dependencies, bitrot, simplicity)</li>
-  <li>Producing better programs (speed, reliability, actually doing what the intended aim was)</li>
-</ul>
-
-<p>So if you’re interested in that sort of thing, read on.</p>
-
-</article>
-
-
 
 
 </section>

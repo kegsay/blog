@@ -4,12 +4,10 @@ title: About
 permalink: /about/
 ---
 
-This is the base Jekyll theme. You can find out more info about customizing your Jekyll theme, as well as basic Jekyll usage documentation at [jekyllrb.com](http://jekyllrb.com/)
+I'm a software engineer based in London. I received my Comp Sci Masters degree in 2012. I have written a lot of code in Java, Javascript, Python and Go. Most of the code I write is available at {% include icon-github.html username="Kegsay" %}.
 
-You can find the source code for the Jekyll new theme at:
-{% include icon-github.html username="jekyll" %} /
-[minima](https://github.com/jekyll/minima)
+I'm interested in the overarching themes of software development: 
+ - how fallible humans can write infallible code. 
+ - the tradeoffs made when designing solutions.
+ - how programming languages/tools can change productivity by orders of magnitude (both ways!)
 
-You can find the source code for Jekyll at
-{% include icon-github.html username="jekyll" %} /
-[jekyll](https://github.com/jekyll/jekyll)

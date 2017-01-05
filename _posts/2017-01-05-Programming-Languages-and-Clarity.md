@@ -27,18 +27,25 @@ people settle on a combination of:
  - Prototyping speed.
  - Succinctness without being unclear.
 
-Let's use Python as a guinea pig: it's fantastic to prototype in, you can express a lot
+Let's use Python as a guinea pig: it's fantastic to prototype in, we can express a lot
 with very little code without being unclear, but it's really slow compared to compiled languages.
 
 What about Java? It's very fast, but is reasonably verbose, and isn't great to
-prototype in as it forces you to break things up into classes before you're ready to.
+prototype in as it forces us to break things up into classes before we're ready to.
 
 What about Go? Again, it's reasonably fast and is okay for both prototyping and succinctness.
 The lack of decent [lodash](https://lodash.com/)-style utility libraries limits how expressive
-you can be per line of code, and it isn't memory safe in the presence of data races thanks to the GC.
+we can be per line of code, and it isn't memory safe in the presence of data races thanks to the GC.
 
-You may have noticed a pattern. There are tradeoffs: **there is no perfect programming language**.
+Rust hits high on a lot of these metrics: it's performant and safe, and reasonably succinct, but it
+isn't great to prototype in as we need to know a lot about the structure of the to-be-written program
+in order to appease the borrow checker.
+
+You may have noticed a pattern. There are tradeoffs: **there is no perfect programming language**. As this
+post is focused on clarity, lets remove performance and safety from the calculations. Python is arguably
+the winner now, but why?
+
+### What makes Python clear?
 
 
-
-### 
+### How languages can be made clearer
